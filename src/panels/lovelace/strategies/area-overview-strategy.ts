@@ -11,7 +11,7 @@ import {
 
 let subscribedRegistries = false;
 
-export class AreaStrategy {
+export class AreaOverviewStrategy {
   static async generateView(
     info: Parameters<LovelaceViewStrategy["generateView"]>[0]
   ): ReturnType<LovelaceViewStrategy["generateView"]> {
@@ -57,12 +57,25 @@ export class AreaStrategy {
   static async generateDashboard(
     info: Parameters<LovelaceDashboardStrategy["generateDashboard"]>[0]
   ): ReturnType<LovelaceDashboardStrategy["generateDashboard"]> {
+    const [areaEntries] = await Promise.all([
+      subscribeOne(info.hass.connection, subscribeAreaRegistry),
+    ]);
+
+    const areaViews = areaEntries.map((area) => ({
+      strategy: {
+        type: "original-states",
+        options: { areaId: area.area_id },
+      },
+      title: area.name,
+    }));
     return {
       title: info.hass.config.location_name,
       views: [
         {
-          strategy: { type: "area" },
+          strategy: { type: "area-overview" },
+          title: "Overview",
         },
+        ...areaViews,
       ],
     };
   }
